@@ -25,6 +25,11 @@
 
 .configoption .details table.fields tr td:first-child {
     background-color: var(--color-orange);
+    white-space: nowrap;
+}
+
+.configoption .details table.fields td {
+    vertical-align: top;
 }
 
 table.fields td {

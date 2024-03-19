@@ -1,3 +1,6 @@
+# This file is a local customization of the config-options extension for Sphinx.
+# https://github.com/canonical/canonical-sphinx-extensions/tree/main/canonical-sphinx-extensions/config-options
+
 from collections import defaultdict
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -23,25 +26,41 @@ def parseOption(obj, option):
 
 class ConfigOption(ObjectDescription):
 
+    ####################################################################
+    # Define directive options in this section, validated during parsing
+    # The order of definition is the same in the output
+
+    # Example usage:
+    # .. config-cert:option:: my-required-id
+    #     :summary: My required field
+    #     :type: My type
+        
     optional_fields = {
-        "type": "Type",
-        "default": "Default",
-        "defaultdesc": "Default",
-        "initialvaluedesc": "Initial value",
-        "liveupdate": "Live update",
-        "condition": "Condition",
-        "readonly": "Read-only",
-        "resource": "Resource",
-        "managed": "Managed",
-        "required": "Required",
-        "scope": "Scope",
+        "unit": "Unit type",
+        "category_id": "Category ID",
+        "certification-status": "Status",
+        "purpose": "Purpose",
+        "steps": "Steps",
+        "verification": "Verification",
+        "description": "Description",
+        "after-suspend": "After-suspend", 
+        "template-id": "From template",                 # job instantiated from template
+        "template-summary": "Template summary",         # template unit
+        "template-description": "Template description", # template unit
+        "template-resource": "Template resource",       # template unit
+        "template-filter": "Template filter",           # template unit
     }
 
-    required_arguments = 1
-    optional_arguments = 1
+    has_id_repeat = False    # whether to display the ID again in the collapsed details
+    id_key_text = "ID: "    # text to display for the ID key
+    shortdesc_key = "summary"   # key to use in RST for the short description
+    ####################################################################
+        
+    required_arguments = 1  # identifier is required in the same line as directive
+    optional_arguments = 1  # shortdesc_key is required as directive option
     has_content = True
     option_spec = {
-        "shortdesc": directives.unchanged_required
+        shortdesc_key: directives.unchanged_required
     }
     for field in optional_fields:
         option_spec[field] = directives.unchanged
@@ -62,7 +81,7 @@ class ConfigOption(ObjectDescription):
         key += nodes.literal(text=self.arguments[0])
         key["classes"].append("key")
 
-        if "shortdesc" not in self.options:
+        if self.shortdesc_key not in self.options:
             logger.warning(
                 "The option fields for the "
                 + self.arguments[0]
@@ -71,8 +90,8 @@ class ConfigOption(ObjectDescription):
             )
             return []
 
-        shortDesc = parseOption(self, self.options["shortdesc"])
-        shortDesc["classes"].append("shortdesc")
+        shortDesc = parseOption(self, self.options[self.shortdesc_key])
+        shortDesc["classes"].append(self.shortdesc_key)
 
         anchor = nodes.inline()
         anchor["classes"].append("anchor")
@@ -100,16 +119,17 @@ class ConfigOption(ObjectDescription):
         tgroup += nodes.colspec(colwidth=3)
         rows = []
         # Add the key name again
-        row_node = nodes.row()
-        desc_entry = nodes.entry()
-        desc_entry += nodes.strong(text="Key: ")
-        val_entry = nodes.entry()
-        val_entry += nodes.literal(text=self.arguments[0])
-        row_node += desc_entry
-        row_node += val_entry
-        rows.append(row_node)
+        if self.has_id_repeat:
+            row_node = nodes.row()
+            desc_entry = nodes.entry()
+            desc_entry += nodes.strong(text=self.id_key_text)
+            val_entry = nodes.entry()
+            val_entry += nodes.literal(text=self.arguments[0])
+            row_node += desc_entry
+            row_node += val_entry
+            rows.append(row_node)
         # Add the other fields
-        for field in self.optional_fields:
+        for field in self.optional_fields: 
             if field in self.options:
                 row_node = nodes.row()
                 desc_entry = nodes.entry()
@@ -136,8 +156,7 @@ class ConfigOption(ObjectDescription):
         newNode += details
 
         # Register the target with the domain
-
-        configDomain = self.env.get_domain("config")
+        configDomain = self.env.get_domain(ConfigDomain.get_name(ConfigDomain))
         configDomain.add_option(self.arguments[0], scope)
 
         # Return the content and target node
@@ -199,12 +218,15 @@ class ConfigIndex(Index):
 
 class ConfigDomain(Domain):
 
-    name = "config"
+    name = "config-cert"    # define name of the directive domain
     label = "Configuration Options"
     roles = {"option": XRefRole()}
-    directives = {"option": ConfigOption}
+    directives = {"option": ConfigOption}   # define name of the directive
     indices = {ConfigIndex}
     initial_data = {"config_options": []}
+
+    def get_name(self):
+        return self.name
 
     def get_objects(self):
         yield from self.data["config_options"]
@@ -261,6 +283,8 @@ class ConfigDomain(Domain):
 
 
 def setup(app):
+
+    # app.add_config_value("config_options_enable_id_repeat", None, "html")
     app.add_domain(ConfigDomain)
 
     common.add_css(app, "config-options.css")
