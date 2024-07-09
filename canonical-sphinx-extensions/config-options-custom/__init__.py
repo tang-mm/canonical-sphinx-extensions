@@ -44,6 +44,9 @@ class ConfigOption(ObjectDescription):
         "verification": "Verification",
         "description": "Description",
         "after-suspend": "After-suspend", 
+        "environ": "Environment variable",
+        "user": "User",
+        "plugin": "Plugin",
         "template-id": "From template",                 # job instantiated from template
         "template-summary": "Template summary",         # template unit
         "template-description": "Template description", # template unit
