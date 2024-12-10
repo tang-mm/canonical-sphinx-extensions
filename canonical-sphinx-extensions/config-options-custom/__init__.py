@@ -47,11 +47,16 @@ class ConfigOption(ObjectDescription):
         "environ": "Environment variable",
         "user": "User",
         "plugin": "Plugin",
+        "requires": "Requires",         # used to refer to Manifest entries
         "template-id": "From template",                 # job instantiated from template
         "template-summary": "Template summary",         # template unit
         "template-description": "Template description", # template unit
         "template-resource": "Template resource",       # template unit
         "template-filter": "Template filter",           # template unit
+        "value-type": "Value type",         # Manifest entry unit (mandatory)
+        "value-units": "Value units",       # Manifest entry unit (optional)
+        "resource-key": "Resource key",     # Manifest entry unit (optional)
+        "prompt": "Prompt",                 # Manifest entry unit (optional)
     }
 
     has_id_repeat = False    # whether to display the ID again in the collapsed details
