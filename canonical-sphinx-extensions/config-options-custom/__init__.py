@@ -188,24 +188,23 @@ class ConfigIndex(Index):
         dispnames = set()
         duplicates = set()
 
-        for _name, dispname, _typ, _docname, anchor, _priority in options:
-            fullname = anchor.partition(":")[0].partition("-")[0] \
-                       + "-" + dispname
+        for _name, dispname, _typ, docname, anchor, _priority in options:
+            scope = anchor.partition(":")[0].partition("-")
+            fullname = (scope[0], dispname, docname, anchor)
             if fullname in dispnames:
                 duplicates.add(fullname)
             else:
                 dispnames.add(fullname)
 
         for _name, dispname, typ, docname, anchor, _priority in options:
-            scope = anchor.partition(":")[0].partition("-")
-
             extra = str(self.domain.env.titles.get(docname, ""))
             if not extra:   # doc was excluded from build
                 continue
 
+            scope = anchor.partition(":")[0].partition("-")
             # if the key exists more than once within the scope, add
             # the title of the document as extra context
-            if scope[0] + "-" + dispname in duplicates:
+            if (scope[0], dispname, docname, anchor) in duplicates:
                 # need some tweaking to work with our CSS
                 extra = extra.replace("<title>", "")
                 extra = extra.replace("</title>", "")
