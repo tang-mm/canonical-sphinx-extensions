@@ -185,39 +185,42 @@ class ConfigIndex(Index):
         # sort by key name
         options = sorted(options, key=lambda option: (option[1], option[4]))
 
-        dispnames = []
-        duplicates = []
+        dispnames = set()
+        duplicates = set()
+
         for _name, dispname, _typ, _docname, anchor, _priority in options:
             fullname = anchor.partition(":")[0].partition("-")[0] \
                        + "-" + dispname
             if fullname in dispnames:
-                duplicates.append(fullname)
+                duplicates.add(fullname)
             else:
-                dispnames.append(fullname)
+                dispnames.add(fullname)
 
         for _name, dispname, typ, docname, anchor, _priority in options:
-
             scope = anchor.partition(":")[0].partition("-")
+
+            extra = str(self.domain.env.titles.get(docname, ""))
+            if not extra:   # doc was excluded from build
+                continue
 
             # if the key exists more than once within the scope, add
             # the title of the document as extra context
             if scope[0] + "-" + dispname in duplicates:
-                extra = str(self.domain.env.titles[docname])
                 # need some tweaking to work with our CSS
                 extra = extra.replace("<title>", "")
                 extra = extra.replace("</title>", "")
-                extra = extra.replace("<literal>", '<code class="literal">')
-                extra = extra.replace("</literal>", "</code>")
-                # add the anchor for full information
-                extra += ': <code class="literal">' + scope[2] + "</code>"
+                if scope[2]:
+                    extra = extra.replace('<code class="xref">', '<code class="literal">')
+                    # add the anchor for full information
+                    extra += ': <code class="literal">' + scope[2] + "</code>"
             else:
                 extra = ""
 
             # group by the first part of the scope
             # ("XXX" if the scope is "XXX-YYY")
-            content[scope[0]].append(
-                (dispname, 0, docname, anchor, extra, "", "")
-            )
+            new_line = (dispname, 0, docname, anchor, extra, "", "")
+            if new_line not in content[scope[0]]:
+                content[scope[0]].append(new_line) 
 
         content = sorted(content.items())
 
